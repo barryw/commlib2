@@ -1,43 +1,48 @@
 #import "cia.asm"
 #import "vic.asm"
 #import "kernal.asm"
+#import "equates.asm"
+#import "settings.asm"
 
-// Define the locations for input and output buffers.
-// Each should be 4kb
-.label INBUF   = $9000
-.label OUTBUF  = $8000
+*=$ca00 "commlib2"
 
-.label NMINV   = $0318
-
-*=$ca00
-
+*=* "Setup"
 Setup:
      jmp rsetup
 
+*=* "Uninstall"
 Uninstall:
      jmp runinstall
 
+*=* "Enable"
 Enable:
      jmp renable
 
+*=* "Disable"
 Disable:
      jmp rdisable
 
+*=* "Sendit"
 Sendit:
      jmp rsendit
 
+*=* "GetByte"
 GetByte:
      jmp getbyt
 
+*=* "PutByte"
 PutByte:
      jmp safesend
 
+*=* "ASCIITable"
 ASCIITable:
      jmp rasciitable
 
+*=* "Terminal"
 Terminal:
      jmp rterminal
 
+*=* "Speed"
 Speed:
      jmp speedselect
 
@@ -273,9 +278,9 @@ safesend:
      pha
 Lcbd3:
      lda vic.RASTER
-     cmp #$f2
+     cmp #RASTER_BOTTOM
      bcs Lcbde
-     cmp #$2c
+     cmp #RASTER_TOP
      bcs Lcbd3
 Lcbde:
      jmp Lcaf1
@@ -426,88 +431,89 @@ Lccc9:
      clc
      rts
 
-     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 busy:
-     .byte $01
+  .byte $01
 timeout:
-     .byte $10
+  .byte $10
 inbuf:
-     .byte >INBUF
+  .byte >INBUF
 outbuf:
-     .byte >OUTBUF
+  .byte >OUTBUF
 inblen:
-     .byte $10
+  .byte $10
 outblen:
-     .byte $10
+  .byte $10
 inbsta:
-     .byte <INBUF, >INBUF
+  .byte <INBUF, >INBUF
 inbend:
-     .byte <INBUF, >INBUF
+  .byte <INBUF, >INBUF
 outbsta:
-     .byte <OUTBUF, >OUTBUF
+  .byte <OUTBUF, >OUTBUF
 outbend:
-     .byte <OUTBUF, >OUTBUF
+  .byte <OUTBUF, >OUTBUF
 inplock:
-     .byte $00
+  .byte $00
 outlock:
-     .byte $00
+  .byte $00
 input:
-     .byte $0a
+  .byte $0a
 output:
-     .byte $00
+  .byte $00
 tempinp:
-     .byte $0a
+  .byte $0a
 tempout:
-     .byte $00
+  .byte $00
 inpidx:
-     .byte $00
+  .byte $00
 outidx:
-     .byte $ff
+  .byte $ff
 sbaud:
-     .byte $97, $01
+  sbaud(baud)
 rbaud:
-     .byte $a2, $01
+  rbaud(baud)
 flow:
-     .byte $00
+  .byte $00
 loc01:
-     .byte $c3
+  .byte $c3
 loc02:
-     .byte $c3
+  .byte $c3
 loc10:
-     .byte $c7
+  .byte $c7
 speed:
-     .byte $02
+  .byte baud
 extra:
-     .byte $00
+  .byte $00
 timings:
-     .byte $00, $0d, $10, $0d, $34, $03, $42, $03, $97, $01, $a2, $01, $c7, $00, $d0, $00
-     .byte $85, $00, $8b, $00, $60, $00, $65, $00, $41, $00, $44, $00, $2f, $00, $32, $00
-     .text @"READ THE MANUAL\$0d"
-     .text @"OR AT   LEAST   THIS:  \$0d"
-     .text @"ROUTINES JUMP   TABLE: \$0d"
-     .text @"FROM    $CA00 TO $CA1F \$0d"
-     .text @"SETUP  \$0d"
-     .text @"UNINSTL\$0d"
-     .text @"ENABLE \$0d"
-     .text @"DISABLE\$0d"
-     .text @"SENDIT \$0d"
-     .text @"GETBYT \$0d"
-     .text @"PUTBYT \$0d"
-     .text @"ASCTABL\$0d"
-     .text @"TERM   \$0d"
-     .text @"SPEED \$0d\$0d"
-     .text @"THE A REGISTER  PASSES  CHARS. \$0d"
-     .text @"$9000 IS4K BUFF\$0d"
-     .text @"$CD00-  ARE SETTINGS   \$0d"
-     .text @"CD1A IS FLOW CNT$00=NONE$80=RTS $40=XON $C0=BOTH       \$0d"
-     .text @"ENA/DIS CONTROLSTHE FLOW       \$0d"
-     .text @"TERM IS EXAMPLE TERMINALPROGRAM\$0d"
-     .text @"CTRL-J  QUITS \$0d\$0d"
-     .text @"       \$0d"
-     .text @"BY ILKER  1997 \$0d"
+  .for(var i = 0; i<32; i++) {
+    .byte baudSettings.get(i)
+  }
+  .text @"READ THE MANUAL\$0d"
+  .text @"OR AT   LEAST   THIS:  \$0d"
+  .text @"ROUTINES JUMP   TABLE: \$0d"
+  .text @"FROM    $CA00 TO $CA1F \$0d"
+  .text @"SETUP  \$0d"
+  .text @"UNINSTL\$0d"
+  .text @"ENABLE \$0d"
+  .text @"DISABLE\$0d"
+  .text @"SENDIT \$0d"
+  .text @"GETBYT \$0d"
+  .text @"PUTBYT \$0d"
+  .text @"ASCTABL\$0d"
+  .text @"TERM   \$0d"
+  .text @"SPEED \$0d\$0d"
+  .text @"THE A REGISTER  PASSES  CHARS. \$0d"
+  .text @"$9000 IS4K BUFF\$0d"
+  .text @"$CD00-  ARE SETTINGS   \$0d"
+  .text @"CD1A IS FLOW CNT$00=NONE$80=RTS $40=XON $C0=BOTH       \$0d"
+  .text @"ENA/DIS CONTROLSTHE FLOW       \$0d"
+  .text @"TERM IS EXAMPLE TERMINALPROGRAM\$0d"
+  .text @"CTRL-J  QUITS \$0d\$0d"
+  .text @"       \$0d"
+  .text @"BY ILKER  1997 \$0d"
 
-     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
