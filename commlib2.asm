@@ -1,5 +1,13 @@
 #import "cia.asm"
 #import "vic.asm"
+#import "kernal.asm"
+
+// Define the locations for input and output buffers.
+// Each should be 4kb
+.label INBUF   = $9000
+.label OUTBUF  = $8000
+
+.label NMINV   = $0318
 
 *=$ca00
 
@@ -38,9 +46,9 @@ Speed:
 rsetup:
      sei
      lda #<irq
-     sta $0318
+     sta NMINV
      lda #>irq
-     sta $0319
+     sta NMINV + $01
      ldy #$03
 Lca2d:
      lda sbaud, y
@@ -52,8 +60,8 @@ Lca2d:
      lda #$90
      sta cia.CI2ICR
      lda inbuf
-     sta inbsta + 1
-     sta inbend + 1
+     sta inbsta + $01
+     sta inbend + $01
      iny
      sty inbsta
      sty inbend
@@ -77,10 +85,10 @@ runinstall:
      sei
      lda #$7f
      sta cia.CI2ICR
-     lda #$47
-     sta $0318
-     lda #$fe
-     sta $0319
+     lda #<kernal.NMIINT + $04
+     sta NMINV
+     lda #>kernal.NMIINT + $04
+     sta NMINV + $01
      lda cia.CI2PRA
      ora #$04
      sta cia.CI2PRA
@@ -115,7 +123,7 @@ renable:
      sta cia.TI2BLO
      lda sbaud
      sta cia.TI2ALO
-     lda sbaud + 1
+     lda sbaud + $01
      sta cia.TI2AHI
      sta cia.TI2BHI
      sta busy
@@ -207,7 +215,7 @@ Lcb65:
      tya
      pha
      ldy #$00
-     jmp $fe56
+     jmp kernal.NMIINT + $13
 
 Lcb6e:
      lda #$11
@@ -236,24 +244,24 @@ Lcb92:
      lda #$10
      sta cia.CI2CRB
      lda inbend
-     sta tmploc + 1
-     lda inbend + 1
-     sta tmploc + 2
+     sta tmploc + $01
+     lda inbend + $01
+     sta tmploc + $02
      lda tempinp
 tmploc:
      sta $7432
      inc inbend
      bne Lcbca
-     inc inbend + 1
+     inc inbend + $01
      clc
      lda inbuf
      adc inblen
-     cmp inbend + 1
+     cmp inbend + $01
      beq Lcbc4
      bcs Lcbca
 Lcbc4:
      lda inbuf
-     sta inbend + 1
+     sta inbend + $01
 Lcbca:
      lda #$90
      sta cia.CI2ICR
@@ -292,8 +300,8 @@ getbyt:
      lda inbsta
      cmp inbend
      bne Lcc0d
-     lda inbsta + 1
-     cmp inbend + 1
+     lda inbsta + $01
+     cmp inbend + $01
      bne Lcc0d
      sec
      lda #$00
@@ -301,24 +309,24 @@ getbyt:
 
 Lcc0d:
      lda inbsta
-     sta bufloc + 1
-     lda inbsta + 1
-     sta bufloc + 2
+     sta bufloc + $01
+     lda inbsta + $01
+     sta bufloc + $02
 bufloc:
-     lda $9000
+     lda INBUF
      sta input
      inc inbsta
      bne Lcc3e
-     inc inbsta + 1
+     inc inbsta + $01
      clc
      lda inbuf
      adc inblen
-     cmp inbsta + 1
+     cmp inbsta + $01
      beq Lcc35
      bcs Lcc3b
 Lcc35:
      lda inbuf
-     sta inbsta + 1
+     sta inbsta + $01
 Lcc3b:
      lda input
 Lcc3e:
@@ -390,14 +398,14 @@ Lcc8c:
 rterminal:
      jsr Setup
      lda #$0d
-     jsr $ffd2
+     jsr kernal.CHROUT
      lda #$00
      sta $19
      lda #$ce
      sta $1a
      jsr ASCIITable
 Lccb0:
-     jsr $ffe4
+     jsr kernal.GETIN
      beq Lccbb
      tay
      lda ($19),y
@@ -407,7 +415,7 @@ Lccbb:
      bcs Lccc9
      tay
      lda ($19),y
-     jsr $ffd2
+     jsr kernal.CHROUT
      jmp Lccbb
 
 Lccc9:
@@ -427,21 +435,21 @@ busy:
 timeout:
      .byte $10
 inbuf:
-     .byte $90
+     .byte >INBUF
 outbuf:
-     .byte $80
+     .byte >OUTBUF
 inblen:
      .byte $10
 outblen:
      .byte $10
 inbsta:
-     .byte $00, $90
+     .byte <INBUF, >INBUF
 inbend:
-     .byte $00, $90
+     .byte <INBUF, >INBUF
 outbsta:
-     .byte $00, $80
+     .byte <OUTBUF, >OUTBUF
 outbend:
-     .byte $00, $80
+     .byte <OUTBUF, >OUTBUF
 inplock:
      .byte $00
 outlock:
