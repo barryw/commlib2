@@ -6,12 +6,12 @@
                                $85, $00, $8b, $00, $60, $00, $65, $00, $41, $00, $44, $00, $2f, $00, $32, $00)
 
 // Return baud timing information as a word
-.macro sbaud(baud) {
+.macro sbaud() {
   .byte baudSettings.get(baud * 4)
   .byte baudSettings.get(baud * 4 + 1)
 }
 
-.macro rbaud(baud) {
+.macro rbaud() {
   .byte baudSettings.get(baud * 4 + 2)
   .byte baudSettings.get(baud * 4 + 3)
 }
