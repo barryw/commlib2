@@ -7,11 +7,11 @@
 
 // Return baud timing information as a word
 .macro sbaud() {
-  .byte baudSettings.get(baud * 4)
-  .byte baudSettings.get(baud * 4 + 1)
+  .byte baudSettings.get(baud * $04)
+  .byte baudSettings.get(baud * $04 + $01)
 }
 
 .macro rbaud() {
-  .byte baudSettings.get(baud * 4 + 2)
-  .byte baudSettings.get(baud * 4 + 3)
+  .byte baudSettings.get(baud * $04 + $02)
+  .byte baudSettings.get(baud * $04 + $03)
 }

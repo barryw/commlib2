@@ -48,6 +48,9 @@ Speed:
 
   .byte $00, $00
 
+/*
+Set everything up. Does not require anything to be passed to it.
+*/
 rsetup:
   sei
   lda #<irq
@@ -84,8 +87,13 @@ Lca2d:
   cli
   rts
 
-  .byte $00, $00, $00, $00, $00, $00, $00
+  .for(var i = 0; i < 7; i++) {
+    .byte $00
+  }
 
+/*
+Uninstall and exit
+*/
 runinstall:
   sei
   lda #$7f
@@ -148,6 +156,11 @@ Lcaed:
   clc
   rts
 
+/*
+Send the byte in the A register
+
+A: the byte to send
+*/
 rsendit:
   php
   pha
@@ -273,6 +286,11 @@ Lcbca:
   pla
   rti
 
+/*
+Wait for the VIC raster to be off-screen before sending a byte
+
+A: byte to send
+*/
 safesend:
   php
   pha
@@ -285,6 +303,11 @@ Lcbd3:
 Lcbde:
   jmp Lcaf1
 
+/*
+Set up baud rate.
+
+A: value from 0 - 7 to specify baud. look in equates for baud rate enum
+*/
 speedselect:
   sta speed
   asl
@@ -301,6 +324,10 @@ Lcbe9:
   bne Lcbe9
   rts
 
+/*
+Receive a byte from RS-232. Returns the byte in the A register.
+Sets the carry flag and returns $00 if there's nothing waiting.
+*/
 getbyt:
   lda inbsta
   cmp inbend
@@ -400,6 +427,9 @@ Lcc8c:
 
   .byte $00, $00, $00, $00, $00
 
+/*
+Runs a mini-terminal to test the library. Use CTRL-J to exit.
+*/
 rterminal:
   jsr Setup
   lda #$0d
@@ -431,10 +461,10 @@ Lccc9:
   clc
   rts
 
-  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  .for(var i = 0; i<43; i++) {
+    .byte $00
+  }
+
 busy:
   .byte $01
 timeout:
@@ -515,5 +545,6 @@ timings:
   .text @"       \$0d"
   .text @"BY ILKER  1997 \$0d"
 
-  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-  .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  .for(var i = 0; i<32; i++) {
+    .byte $00
+  }
