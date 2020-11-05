@@ -8,19 +8,19 @@
 
 *=* "Setup"
 Setup:
-  jmp rsetup
+  jmp setup
 
 *=* "Uninstall"
 Uninstall:
-  jmp runinstall
+  jmp uninstall
 
 *=* "Enable"
 Enable:
-  jmp renable
+  jmp enable
 
 *=* "Disable"
 Disable:
-  jmp rdisable
+  jmp disable
 
 *=* "PutByte"
 PutByte:
@@ -36,11 +36,11 @@ SafePutByte:
 
 *=* "ASCIITable"
 ASCIITable:
-  jmp rasciitable
+  jmp asciitable
 
 *=* "Terminal"
 Terminal:
-  jmp rterminal
+  jmp terminal
 
 *=* "SetSpeed"
 SetSpeed:
@@ -51,7 +51,7 @@ SetSpeed:
 /*
 Set everything up. Does not require anything to be passed to it.
 */
-rsetup:
+setup:
   sei
   lda #<irq
   sta NMINV
@@ -94,7 +94,7 @@ Lca2d:
 /*
 Uninstall and exit
 */
-runinstall:
+uninstall:
   sei
   lda #$7f
   sta cia.CI2ICR
@@ -109,7 +109,10 @@ runinstall:
   clc
   rts
 
-rdisable:
+/*
+Disable flow control
+*/
+disable:
   bit flow
   bpl Lcaa1
   lda cia.CI2PRB
@@ -131,7 +134,10 @@ Lcaad:
   clc
   rts
 
-renable:
+/*
+Enable flow control
+*/
+enable:
   lda Terminal
   sta cia.TI2BLO
   lda sbaud
@@ -188,7 +194,6 @@ Lcb1d:
   plp
   rts
 
-nmidetect:
   sei
 irq:
   pha
@@ -287,7 +292,9 @@ Lcbca:
   rti
 
 /*
-Wait for the VIC raster to be off-screen before sending a byte
+Wait for the VIC raster to be off-screen before sending a byte.
+This allows you to use this library in conjunction with applications
+that take advantage of the VIC-II.
 
 A: byte to send
 */
@@ -365,7 +372,10 @@ Lcc3e:
   clc
   rts
 
-rasciitable:
+/*
+Sets up an ASCII -> PETSCII lookup table
+*/
+asciitable:
   cmp #$04
   bcc Lcc8c
   cmp #$d0
@@ -430,7 +440,7 @@ Lcc8c:
 /*
 Runs a mini-terminal to test the library. Use CTRL-J to exit.
 */
-rterminal:
+terminal:
   jsr Setup
   lda #$0d
   jsr kernal.CHROUT
@@ -465,6 +475,9 @@ Lccc9:
     .byte $00
   }
 
+/*
+State storage
+*/
 busy:
   .byte $01
 timeout:
