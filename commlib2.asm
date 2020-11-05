@@ -451,12 +451,14 @@ terminal:
   lda #$ce
   sta $1a
   jsr ASCIITable
+
 !:
   jsr kernal.GETIN
   beq !+
   tay
   lda ($19),y
   jsr PutByte
+
 !:
   jsr GetByte
   bcs !+
