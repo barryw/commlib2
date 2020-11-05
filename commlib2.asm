@@ -58,11 +58,11 @@ setup:
   lda #>irq
   sta NMINV + $01
   ldy #$03
-Lca2d:
+!:
   lda sbaud, y
   sta cia.TI2ALO, y
   dey
-  bpl Lca2d
+  bpl !-
   lda #$7f
   sta cia.CI2ICR
   lda #$90
@@ -114,19 +114,19 @@ Disable flow control
 */
 disable:
   bit flow
-  bpl Lcaa1
+  bpl !+
   lda cia.CI2PRB
   and #$fd
   sta cia.CI2PRB
   bit flow
-Lcaa1:
-  bvc Lcaad
+!:
+  bvc !++
   lda #$13
   jsr putbyte
-Lcaa8:
+!:
   lda busy
-  bmi Lcaa8
-Lcaad:
+  bmi !-
+!:
   lda #$7f
   sta cia.CI2ICR
   lda #$80
@@ -149,16 +149,16 @@ enable:
   lda #$90
   sta cia.CI2ICR
   bit flow
-  bpl Lcae6
+  bpl !+
   lda cia.CI2PRB
   ora #$02
   sta cia.CI2PRB
   bit flow
-Lcae6:
-  bvc Lcaed
+!:
+  bvc !+
   lda #$11
   jsr putbyte
-Lcaed:
+!:
   clc
   rts
 
@@ -170,9 +170,9 @@ A: the byte to send
 putbyte:
   php
   pha
-Lcaf1:
+pb2:
   lda busy
-  bmi Lcaf1
+  bmi pb2
   sei
   lda #$81
   sta cia.CI2ICR
@@ -187,9 +187,10 @@ Lcaf1:
   lda loc02
   sta cia.CI2PRA
   lsr tempout
-  bcc Lcb1d
+  bcc !+
   lda loc10
-Lcb1d:
+
+!:
   sta loc01
   plp
   rts
@@ -198,32 +199,33 @@ Lcb1d:
 irq:
   pha
   lda cia.CI2ICR
-  bpl Lcb65
+  bpl !++++
   and #$03
-  beq Lcb6e
+  beq !+++++
   and #$02
-  bne Lcb84
+  bne !++++++
   lda loc01
   sta cia.CI2PRA
   lda loc10
   lsr tempout
-  bcs Lcb42
+  bcs !+
   lda loc02
-Lcb42:
+
+!:
   sta loc01
   dec outidx
-  bmi Lcb56
-  beq Lcb4e
+  bmi !++
+  beq !+
   pla
   rti
 
-Lcb4e:
+!:
   lda loc10
   sta loc01
   pla
   rti
 
-Lcb56:
+!:
   lda #$10
   sta cia.CI2CRA
   lda #$01
@@ -232,7 +234,7 @@ Lcb56:
   pla
   rti
 
-Lcb65:
+!:
   txa
   pha
   tya
@@ -240,7 +242,7 @@ Lcb65:
   ldy #$00
   jmp kernal.NMIINT + $13
 
-Lcb6e:
+!:
   lda #$11
   sta cia.CI2CRB
   lda #$10
@@ -252,7 +254,7 @@ Lcb6e:
   pla
   rti
 
-Lcb84:
+!:
   lda cia.CI2PRB
   lsr
   ror tempinp
@@ -274,18 +276,18 @@ Lcb92:
 tmploc:
   sta $7432
   inc inbend
-  bne Lcbca
+  bne !++
   inc inbend + $01
   clc
   lda inbuf
   adc inblen
   cmp inbend + $01
-  beq Lcbc4
-  bcs Lcbca
-Lcbc4:
+  beq !+
+  bcs !++
+!:
   lda inbuf
   sta inbend + $01
-Lcbca:
+!:
   lda #$90
   sta cia.CI2ICR
   pla
@@ -301,14 +303,14 @@ A: byte to send
 safeputbyte:
   php
   pha
-Lcbd3:
+!:
   lda vic.RASTER
   cmp #RASTER_BOTTOM
-  bcs Lcbde
+  bcs !+
   cmp #RASTER_TOP
-  bcs Lcbd3
-Lcbde:
-  jmp Lcaf1
+  bcs !-
+!:
+  jmp pb2
 
 /*
 Set up baud rate.
@@ -321,14 +323,14 @@ speedselect:
   asl
   tay
   ldx #$00
-Lcbe9:
+!:
   lda timings,y
   sta sbaud,x
   sta cia.TI2ALO, x
   iny
   inx
   cpx #$04
-  bne Lcbe9
+  bne !-
   rts
 
 /*
@@ -338,15 +340,15 @@ Sets the carry flag and returns $00 if there's nothing waiting.
 getbyte:
   lda inbsta
   cmp inbend
-  bne Lcc0d
+  bne !+
   lda inbsta + $01
   cmp inbend + $01
-  bne Lcc0d
+  bne !+
   sec
   lda #$00
   rts
 
-Lcc0d:
+!:
   lda inbsta
   sta bufloc + $01
   lda inbsta + $01
@@ -355,20 +357,20 @@ bufloc:
   lda INBUF
   sta input
   inc inbsta
-  bne Lcc3e
+  bne !+++
   inc inbsta + $01
   clc
   lda inbuf
   adc inblen
   cmp inbsta + $01
-  beq Lcc35
-  bcs Lcc3b
-Lcc35:
+  beq !+
+  bcs !++
+!:
   lda inbuf
   sta inbsta + $01
-Lcc3b:
+!:
   lda input
-Lcc3e:
+!:
   clc
   rts
 
@@ -377,12 +379,12 @@ Sets up an ASCII -> PETSCII lookup table
 */
 asciitable:
   cmp #$04
-  bcc Lcc8c
+  bcc !++++++
   cmp #$d0
-  bcc Lcc4c
+  bcc !+
   cmp #$e0
-  bcc Lcc8c
-Lcc4c:
+  bcc !++++++
+!:
   tay
   lda $19
   pha
@@ -392,40 +394,40 @@ Lcc4c:
   lda #$00
   sta $19
   ldy #$7f
-Lcc5b:
+!:
   tya
   sta ($19),y
   dey
-  bpl Lcc5b
+  bpl !-
   ldy #$5a
-Lcc63:
+!:
   tya
   ora #$20
   sta ($19),y
   dey
   cpy #$40
-  bne Lcc63
+  bne !-
   ldy #$7a
-Lcc6f:
+!:
   tya
   and #$df
   sta ($19),y
   dey
   cpy #$60
-  bne Lcc6f
+  bne !-
   ldy #$da
-Lcc7b:
+!:
   tya
   and #$5f
   sta ($19),y
   dey
   cpy #$bf
-  bne Lcc7b
+  bne !-
   ldy #$08
   lda #$14
   sta ($19),y
   tay
-Lcc8c:
+!:
   lda #$08
   sta ($19),y
   pla
@@ -449,24 +451,24 @@ terminal:
   lda #$ce
   sta $1a
   jsr ASCIITable
-Lccb0:
+!:
   jsr kernal.GETIN
-  beq Lccbb
+  beq !+
   tay
   lda ($19),y
   jsr PutByte
-Lccbb:
+!:
   jsr GetByte
-  bcs Lccc9
+  bcs !+
   tay
   lda ($19),y
   jsr kernal.CHROUT
-  jmp Lccbb
+  jmp !-
 
-Lccc9:
+!:
   lda cia.CIAPRA
   and #$10
-  bne Lccb0
+  bne !---
   jsr Uninstall
   clc
   rts
