@@ -22,17 +22,17 @@ Enable:
 Disable:
   jmp rdisable
 
-*=* "Sendit"
-Sendit:
-  jmp rsendit
+*=* "PutByte"
+PutByte:
+  jmp putbyte
 
 *=* "GetByte"
 GetByte:
-  jmp getbyt
+  jmp getbyte
 
-*=* "PutByte"
-PutByte:
-  jmp safesend
+*=* "SafePutByte"
+SafePutByte:
+  jmp safeputbyte
 
 *=* "ASCIITable"
 ASCIITable:
@@ -42,8 +42,8 @@ ASCIITable:
 Terminal:
   jmp rterminal
 
-*=* "Speed"
-Speed:
+*=* "SetSpeed"
+SetSpeed:
   jmp speedselect
 
   .byte $00, $00
@@ -119,7 +119,7 @@ rdisable:
 Lcaa1:
   bvc Lcaad
   lda #$13
-  jsr rsendit
+  jsr putbyte
 Lcaa8:
   lda busy
   bmi Lcaa8
@@ -151,7 +151,7 @@ renable:
 Lcae6:
   bvc Lcaed
   lda #$11
-  jsr rsendit
+  jsr putbyte
 Lcaed:
   clc
   rts
@@ -161,7 +161,7 @@ Send the byte in the A register
 
 A: the byte to send
 */
-rsendit:
+putbyte:
   php
   pha
 Lcaf1:
@@ -291,7 +291,7 @@ Wait for the VIC raster to be off-screen before sending a byte
 
 A: byte to send
 */
-safesend:
+safeputbyte:
   php
   pha
 Lcbd3:
@@ -328,7 +328,7 @@ Lcbe9:
 Receive a byte from RS-232. Returns the byte in the A register.
 Sets the carry flag and returns $00 if there's nothing waiting.
 */
-getbyt:
+getbyte:
   lda inbsta
   cmp inbend
   bne Lcc0d
@@ -444,7 +444,7 @@ Lccb0:
   beq Lccbb
   tay
   lda ($19),y
-  jsr Sendit
+  jsr PutByte
 Lccbb:
   jsr GetByte
   bcs Lccc9
